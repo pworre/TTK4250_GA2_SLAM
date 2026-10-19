@@ -1,0 +1,4 @@
+[console_scripts]
+plot_run = graphslam.plotter:main
+run_real = graphslam.run_real:main
+run_sim = graphslam.run_sim:main
