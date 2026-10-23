@@ -79,6 +79,8 @@ def relative_pose(
 # Task 1 (b): preintegration
 # ---------------------------------------------------------------------------
 
+def h(i: int) -> np.ndarray:
+    return np.array([])
 
 def preintegrate(
     poses: list[gtsam.Pose2],
@@ -102,6 +104,21 @@ def preintegrate(
     """
     # TODO(b): compound the increments and propagate the covariance.
     
+    pose = gtsam.Pose2()
+    cov = np.zeros((3,3))
+
+    for rel_increment, cov_increment in zip(poses, covariances):
+        #
+        H1 = np.zeros((3,3), order="F")
+        H2 = np.zeros((3,3), order="F")
+
+        new_pose = pose.compose(rel_increment, H1, H2)
+
+        cov = H1 @ cov @ H1.T + H2 @ cov_increment @ H2.T
+
+        pose = new_pose
+
+    return pose, cov
 
 
 # ---------------------------------------------------------------------------
