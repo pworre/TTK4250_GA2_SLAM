@@ -34,6 +34,7 @@ def relative_pose(
     vel_encoder: float, steer: float, dt: float, car: Car = CAR
 ) -> gtsam.Pose2:
     """Relative pose increment from one wheel-encoder reading. Task 1 (a).
+    Crucial knowledge to have to know the displacement of the robot between two sensor scans.
 
     Parameters
     ----------
@@ -53,8 +54,26 @@ def relative_pose(
         The relative pose increment over the interval.
     """
     # TODO(a): build the body twist and integrate it over dt with the exponential map.
-    raise NotImplementedError("Task 1 (a)")
 
+    vel_body_fwd = vel_encoder / (1 - (car.H / car.L) * np.tan(steer))
+    w = vel_body_fwd / car.L * np.tan(steer)
+
+    # Body twist
+    xi = np.array([
+        vel_body_fwd,
+        0,
+        w
+    ])
+
+    # Integrate over time interval
+    xi_dt = xi * dt
+
+    # Exponential map
+    #   For a rotating vehicle, the body frame changes the orientation as the vehicle moves. 
+    #   Integrated twist need to be treated in exponential map, not Cartiesian pose directly
+    relative_pose = gtsam.Pose2.Expmap(xi_dt)
+
+    return relative_pose
 
 # ---------------------------------------------------------------------------
 # Task 1 (b): preintegration
@@ -82,7 +101,7 @@ def preintegrate(
         Its covariance.
     """
     # TODO(b): compound the increments and propagate the covariance.
-    raise NotImplementedError("Task 1 (b)")
+    
 
 
 # ---------------------------------------------------------------------------
