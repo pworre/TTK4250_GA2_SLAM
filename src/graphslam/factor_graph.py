@@ -101,7 +101,17 @@ def add_odometry_factor(
         Covariance of that increment, in the tangent space of ``relative_pose``.
     """
     # TODO(c2): add a BetweenFactorPose2 with a full-covariance Gaussian noise model.
-    raise NotImplementedError("Task 1 (c2)")
+    # raise NotImplementedError("Task 1 (c2)")
+
+    # Q : the uncertainty of the relative movement between the poses
+    noise_model = gtsam.noiseModel.Gaussian.Covariance(relative_pose_cov)
+
+    # Create a factor between X(key_current) and X(key_previous).
+    # So we encode the relative movement and its uncertainty as a factor.
+    # Can be thought if as a spring with connecting the poses with stiffness k = (1/Q).
+    factor = gtsam.BetweenFactorPose2(key_previous, key_current, relative_pose, noise_model)
+    graph.add(factor)
+    return None
 
 def add_landmark_factor(
     graph: gtsam.NonlinearFactorGraph,
@@ -125,7 +135,17 @@ def add_landmark_factor(
         From :func:`bearing_range_noise_model`, ordered [bearing, range].
     """
     # TODO(c3): add a BearingRangeFactor2D. Mind the argument order.
-    raise NotImplementedError("Task 1 (c3)")
+    # raise NotImplementedError("Task 1 (c3)")
+
+    # Extract measurements
+    range = float(measurement[0])
+    bearing = gtsam.Rot2(measurement[1])
+
+    # Add the landmark measurement as a factor in the graph, with uncertainty given 
+    # by the noise model.
+    factor = gtsam.BearingRangeFactor2D(pose_key, landmark_key, bearing, range, noise_model)
+    graph.add(factor)
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -156,8 +176,33 @@ def predict_measurement(
         d z / d m_j.
     """
     # TODO(d): predict [range, bearing] and stack the two rows of each Jacobian.
-    raise NotImplementedError("Task 1 (d)")
+    # raise NotImplementedError("Task 1 (d)")
 
+    # H
+    H_range_pose = np.zeros((1,3), order="F")
+    H_bearing_pose = np.zeros((1,3), order="F")
+    H_range_landmark = np.zeros((1,2), order="F")
+    H_bearing_landmark = np.zeros((1,2), order="F")
+
+    # 
+    range_ = pose.range(landmark, H_range_pose, H_range_landmark)
+    pose_ = pose.bearing(landmark, H_bearing_pose, H_bearing_landmark)
+
+    # === compose output ===
+
+    z = np.zeros((2,))
+    z[0] = range_
+    z[1] = pose_.theta()
+
+    H_pose = np.zeros((2,3), order="F")
+    H_pose[0:1, 0:3] = H_range_pose
+    H_pose[1:2, 0:3] = H_bearing_pose
+
+    H_landmark = np.zeros((2,2), order="F")
+    H_landmark[0:1, 0:2] = H_range_landmark
+    H_landmark[1:2, 0:2] = H_bearing_landmark
+
+    return (z, H_pose, H_landmark)
 
 def inverse_measurement(pose: gtsam.Pose2, measurement: np.ndarray) -> np.ndarray:
     """World-frame landmark position from one range-bearing measurement. Task 1 (g).
