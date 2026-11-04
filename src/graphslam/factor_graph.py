@@ -58,6 +58,7 @@ def predict_pose(previous_pose: gtsam.Pose2, relative_pose: gtsam.Pose2) -> gtsa
     ----------
     previous_pose : gtsam.Pose2
         The current estimate of the previous pose, x_{k-1}.
+        
     relative_pose : gtsam.Pose2
         The measured body-frame increment, u_k.
 
@@ -66,8 +67,17 @@ def predict_pose(previous_pose: gtsam.Pose2, relative_pose: gtsam.Pose2) -> gtsa
     gtsam.Pose2
         The predicted pose x_k.
     """
-    # TODO(c1): compose the relative pose onto the previous pose.
-    raise NotImplementedError("Task 1 (c1)")
+    # TODO: (c1)
+    # raise NotImplementedError("Task 1 (c1)")
+
+    # Compose operation: x_k = x_k * x_rel 
+    # where (*) uses surge and sway and heading to
+    # calculate the new pose. 
+
+    # gtsam compose() method
+    pose = previous_pose.compose(relative_pose)
+
+    return pose
 
 
 def add_odometry_factor(
@@ -92,7 +102,6 @@ def add_odometry_factor(
     """
     # TODO(c2): add a BetweenFactorPose2 with a full-covariance Gaussian noise model.
     raise NotImplementedError("Task 1 (c2)")
-
 
 def add_landmark_factor(
     graph: gtsam.NonlinearFactorGraph,

@@ -108,7 +108,8 @@ def preintegrate(
     cov = np.zeros((3,3))
 
     for rel_increment, cov_increment in zip(poses, covariances):
-        #
+
+        # order=F : Fortran style memory layout
         H1 = np.zeros((3,3), order="F")
         H2 = np.zeros((3,3), order="F")
 
