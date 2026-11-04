@@ -184,7 +184,11 @@ def predict_measurement(
     H_range_landmark = np.zeros((1,2), order="F")
     H_bearing_landmark = np.zeros((1,2), order="F")
 
-    # 
+    # The robot computes the range and bearing 
+    # of the landmark. Pose is the robots pose and therefore
+    # and its called on pose since we measure from here. 
+    # It then returns the Jacobians which tells us how the 
+    # measurement changes as the pose changes.
     range_ = pose.range(landmark, H_range_pose, H_range_landmark)
     pose_ = pose.bearing(landmark, H_bearing_pose, H_bearing_landmark)
 
@@ -249,7 +253,29 @@ def assemble_joint_covariance(
         P, whose block (i, j) is the covariance between ``keys[i]`` and ``keys[j]``.
     """
     # TODO(e): fill P block by block from joint_marginal.at(key_i, key_j).
-    raise NotImplementedError("Task 1 (e)")
+    # raise NotImplementedError("Task 1 (e)")
+
+    # P: Joint covariance between the current pose and the landmarks we
+    # are keeping track of. 
+    # P is not stored directly (only the information matrix is)
+    # so it needs to be composed using joint_marginal.at(i, j) and some
+    # numpy magic
+
+    dim = sum(joint_marginal.at(k,k).shape[0] for k in keys)
+    P = np.zeros((dim,dim))
+
+    # Compose P by looking up the marginals using a double for loop
+    # filling the blocks to the correct slot
+    r = 0
+    for i in keys:
+        si = joint_marginal.at(i,i).shape[0]
+        c = 0
+        for j in keys:
+            sj = joint_marginal.at(j,j).shape[0]
+            P[r:r+si, c:c+sj] = joint_marginal.at(i,j)
+            c += sj
+        r += si
+    return P
 
 
 # ---------------------------------------------------------------------------
