@@ -224,8 +224,20 @@ def inverse_measurement(pose: gtsam.Pose2, measurement: np.ndarray) -> np.ndarra
         Landmark position in the world frame.
     """
     # TODO(g): rotate by the bearing, translate by the range, map to the world frame.
-    raise NotImplementedError("Task 1 (g)")
+    # raise NotImplementedError("Task 1 (g)")
 
+    # Task: Implement the inverse measurement function h^-1(z, x)
+    # given a measurement <measurement> taken from pose <pose>.
+
+    r, b  = measurement # range (r), bearing (b)
+
+    # Location of landmark measurement from the body of the robot
+    p_m_body = gtsam.Rot2(b).rotate(gtsam.Point2(r, 0.0))
+
+    # Rotate to world using the robots pose
+    p_m_world = pose.transformFrom(p_m_body)
+
+    return p_m_world
 
 # ---------------------------------------------------------------------------
 # Task 1 (e): the joint covariance of the local map
@@ -309,7 +321,35 @@ def innovation_covariance(
         The innovation covariance ``S``.
     """
     # TODO(f): build the stacked H, build the block-diagonal R, and form S.
-    raise NotImplementedError("Task 1 (f)")
+    # raise NotImplementedError("Task 1 (f)")
+
+    # number of landmarks
+    n = len(jacobians_pose)
+
+    # Measurement noise diagonal matrix
+    Ra = np.kron(np.eye(n), measurement_cov)
+
+    P = joint_covariance
+
+    # Compose H
+    H = np.zeros((2*n, 3+2*n))
+    Hps = jacobians_pose
+    Hms = jacobians_landmark 
+    for i in range(n):
+        # Calculate slices
+        rows = slice(2*i, 2*i+2) # n=2
+        cols_pose = slice(0,3)
+        cols_m = slice(3+2*i, 3+2*i+2)
+
+        # Fill H with Hs
+        H[rows,cols_pose] = Hps[i]
+        H[rows,cols_m] = Hms[i]
+
+    # S = HPH.T + Ra | (9.26) | page 189
+
+    S = H @ P @ H.T + Ra
+
+    return S
 
 
 # ---------------------------------------------------------------------------
