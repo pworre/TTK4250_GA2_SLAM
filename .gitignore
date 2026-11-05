@@ -3,6 +3,8 @@ handin_*.zip
 .DS_Store
 runs/
 figures/
+runs_t2_archive/
+
 # --- DO THIS IF WE WANT TO SHARE RUNS ---
 # git add -f runs/sim/<run_name>/config.yaml
 # git add -f runs/sim/<run_name>/figures/<plot>.png
